@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8' />
+    <title>자신의 데이터셋을 기반으로 한 질의 응답 모형(Question-Answering Model)</title>
+    <link rel='stylesheet' href='{{ url_for('static', filename='style.css') }}' />
+    <style>        
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        input[type="button"]:hover {
+            background-color: #397814;
+        }
+
+        label {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        label:hover {
+            background-color: #1e90ff;
+        }
+
+        .filename {
+            display: inline-block;
+            margin-top: 10px;
+            align-items: center;
+        }
+
+        input[type="button"] {
+            display: inline-block;
+            margin-right: 10px; /* 버튼 사이의 간격 조정 */
+            padding: 10px 20px;
+            background-color: #2ecc71;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .progress {
+            margin-top: 10px;
+            width: 200px;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+            margin: auto;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background-color: #3498db;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+            border-radius: 5px;
+        }
+
+        .status-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }  
+
+        .qa-progress-bar {
+            width: 450px;
+            height: 10px;
+            background-color: #f2f2f2;
+            border-radius: 5px;
+          }
+
+        .qa-progress-bar-fill {
+            height: 100%;
+            background-color: #4CAF50;
+            border-radius: 5px;
+            transition: width 0.5s;
+          }
+
+        #question-input {
+            width: 400px; /* 원하는 길이로 조절하세요 */
+            height: 25px; /* 텍스트박스의 높이도 원하는 만큼 설정하세요 */
+            font-size: 12px; /* 폰트 크기 등 스타일도 원하는대로 설정하세요 */
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function onPageLoad() {
+            // 페이지 로드가 완료되었을 때 실행할 작업을 여기에 작성합니다.
+            stopProgress();
+      
+            document.addEventListener('DOMContentLoaded', onPageLoad);
+        }
+    </script>
+    {{ moment.include_moment() }}
+</head>
+<body>
+    <h1 align='center'>파일 업로드</h1>
+    {% if message %}
+        <p align='center'>{{ message }}</p>
+    {% endif %}
+    <form id="upload-form" action="http://127.0.0.1:5000/upload" method="post" enctype="multipart/form-data">
+        {{ form.csrf_token }}
+        <div class="filename" id="filename-placeholder">파일을 선택해주세요.</div>
+        <label for="file-upload">파일 선택</label>
+        <input type="file" id="file-upload" name="file">
+        <input type="button" value="업로드" onclick="uploadFile()">
+    </form>
+
+    <p></p>
+    <!-- 프로그레스바 -->
+    <div class="progress">
+        <div class="progress-bar" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">0%</div>
+    </div>
+    <!-- 분석 결과 영역 -->
+    <script>
+        var progressBar;
+        var interval;
+    
+        function startProgress() {
+          document.querySelector('.qa-progress-bar-fill').style.display = 'block';
+          progressBar = document.querySelector('.qa-progress-bar-fill');
+          var width = 0;
+          interval = setInterval(function() {
+            if (width >= 100) {
+              clearInterval(interval);
+            } else {
+              width++;
+              progressBar.style.width = width + '%';
+            }
+          }, 50);
+        }
+    
+        function stopProgress() {
+          document.querySelector('.qa-progress-bar-fill').style.display = 'block';
+          clearInterval(interval);
+          progressBar.style.width = '0%';
+        }
+
+        function askQuestion() {
+            var questionInput = document.getElementById("question-input");
+            var question = questionInput.value;
+            var chatWindow = $('#chat-window');
+
+            // Check if the question is empty
+            if (!question) {
+              alert("질문을 입력해주세요.");
+              return;
+            }
+
+            // Ask the question to the server using $.ajax()
+            $.ajax({
+              url: "/ask", // 데이터 전송 엔드포인트
+              type: "POST",
+              data: { text: question }, // 텍스트 데이터 전송
+              beforeSend: function () {
+                // 요청 전에 실행되는 콜백 함수
+                startProgress();
+
+                chatWindow.append('<div style="margin-top: 3px; margin-bottom: 3px"><span class="user-id"> ME </span><span class="user-message">' + question + '</span></div>');
+                txt_msg = "요청을 처리하는 중입니다. 기다려 주세요.";
+                $("#arg-window").text(txt_msg);
+              },
+              success: function (data) {
+                // 요청이 성공적으로 완료된 경우 실행되는 콜백 함수
+                if (data.result === "success") {                    
+                    chatWindow.append('<div style="margin-top: 3px; margin-bottom: 3px"><span class="bot-id"> QA Model </span><span class="bot-message">' + data.answer + '</span></div>');
+                    chatWindow.scrollTop(chatWindow.prop("scrollHeight"));
+                    // Clear the question input field
+                    questionInput.value = "";
+                    txt_msg = "요청이 완료되었습니다.";
+                    $("#arg-window").text(txt_msg);
+                } else {
+                  alert(data.message);
+                }
+              },
+              error: function (xhr, status, error) {
+                // 에러가 발생한 경우 실행되는 콜백 함수
+                alert("서버와 통신하는 도중 에러가 발생하였습니다.");
+                console.error(error);
+                txt_msg = "에러가 발생하였습니다.";
+                $("#arg-window").text(txt_msg);
+              },
+              complete: function () {
+                // 요청이 완료된 후 항상 실행되는 콜백 함수
+                stopProgress();
+              },
+            });
+        }
+    </script>
+    <div id="analysis-result"></div>
+    <br>
+    <hr style='margin: 0 auto; width: 70%'>
+    <h2>질문과 답변</h2>
+    <div id="chat-window" style='margin: 0 auto; width: 70%; text-align: left;'></div>
+    <hr style='margin: 0 auto; width: 70%'>
+    <div id="question">
+        <input type="text" id="question-input" placeholder="질문을 입력하세요...">
+        <input type="button" value="입력" onclick="askQuestion()">
+    </div>
+    <div class="status-container">
+        <div id="arg-window" class="text"></div>
+        <div class="qa-progress-bar">
+          <div class="qa-progress-bar-fill"></div>
+        </div>
+    </div>
+    <script>
+        // 파일 선택 시 파일명 표시
+        document.getElementById("file-upload").addEventListener("change", function () {
+            var filenamePlaceholder = document.getElementById("filename-placeholder");
+            filenamePlaceholder.innerHTML = this.files[0].name;
+        });
+
+        // 파일의 확장자를 가져오는 함수
+        function getFileExtension(filename) {
+            var ext = filename.split('.').pop();
+            return ext.toLowerCase();
+        }
+
+        // 파일 업로드 함수
+        function uploadFile() {
+            var form = document.getElementById("upload-form");
+            var formData = new FormData(form);
+            var fileInput = document.getElementById("file-upload");
+
+            // 선택된 파일이 있는지 확인
+            if (!fileInput.files.length) {
+                alert("파일을 선택해주세요.");
+                return;
+            }
+
+            // 선택된 파일의 확장자 확인
+            var allowedExtensions = ["csv", "xls", "xlsx"]; // 허용하는 파일 확장자 목록
+            var filename = fileInput.files[0].name;
+            var fileExtension = getFileExtension(filename);
+
+            if (allowedExtensions.indexOf(fileExtension) === -1) {
+                alert("csv나 xls 파일만 업로드할 수 있습니다.");
+                return;
+            }
+
+            var progressBar = document.getElementById("progress-bar");
+            var progressContainer = document.querySelector(".progress");
+            progressContainer.style.display = "block";
+
+            var xhr = new XMLHttpRequest();
+            xhr.open(form.method, form.action);
+
+            xhr.upload.onprogress = function (e) {
+                if (e.lengthComputable) {
+                    var percentComplete = (e.loaded / e.total) * 100;
+                    progressBar.setAttribute("aria-valuenow", percentComplete.toFixed(2));
+                    progressBar.innerHTML = percentComplete.toFixed(2) + '%';
+                }
+            };
+
+            xhr.onload = function () {
+                progressContainer.style.display = "none";
+                if (xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText); // JSON 형식으로 응답 파싱
+                    if (response.result === 'success') {
+                        // 분석 결과를 표시하는 부분
+                        var analysisResultDiv = document.getElementById("analysis-result");
+                        analysisResultDiv.innerHTML = '<h2>데이터셋의 개요</h2><p>' + response.analysis_result + '</p>';
+                    } else {
+                        // 에러 메시지를 표시하는 부분
+                        alert(response.message);
+                    }
+                }
+            };
+        
+            xhr.send(formData);
+        }
+    </script>
+</body>
+</html>
