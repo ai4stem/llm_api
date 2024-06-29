@@ -1,6 +1,5 @@
 from flask import (
     Flask, request, render_template, url_for, redirect, flash, session, jsonify)
-from flask.json import JSONEncoder
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from werkzeug.utils import secure_filename
