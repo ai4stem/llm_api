@@ -68,7 +68,7 @@ This is the main structure of flask-powered web service.<br>
 \- <b>[static]</b> <i>Folder image and style files</i><br><br>
 
 If you successfully do everything, open the web browser and go to the url:<br>
-RAG Example: <b>http://127.0.0.1:5000/retrieveai</b><br><br>
+RAG Example: <b>http://127.0.0.1:5000/retrieveai</b><br>
 Automated Review: <b>http://127.0.0.1:5000/review</b><br>
 QnA for uploaded files: <b>http://127.0.0.1:5000/upload<b><br><br>
 
