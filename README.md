@@ -68,7 +68,9 @@ This is the main structure of flask-powered web service.<br>
 \- <b>[static]</b> <i>Folder image and style files</i><br><br>
 
 If you successfully do everything, open the web browser and go to the url:<br>
-<b>http://127.0.0.1:5000/retrieveai</b>
+RAG Example: <b>http://127.0.0.1:5000/retrieveai</b><br><br>
+Automated Review: <b>http://127.0.0.1:5000/review</b><br>
+QnA for uploaded files: <b>http://127.0.0.1:5000/upload<b><br><br>
 
 <h3>3. Distribute the service</h3>
 You should obtain public IP address to open your own service.<br>
