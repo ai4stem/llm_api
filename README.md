@@ -2,8 +2,7 @@
 
 
 
-<h4 align="right">Last update: 1 Feb 2024</h4>
-<h4 align="right">KASE Lecture Presentation uploaded in presentation</h4>
+<h4 align="right">Last update: 27 June 2024</h4>
 
 <h4>You can find out guidelines on the 'presentation' folder in this repository.</h4>
 
@@ -69,7 +68,9 @@ This is the main structure of flask-powered web service.<br>
 \- <b>[static]</b> <i>Folder image and style files</i><br><br>
 
 If you successfully do everything, open the web browser and go to the url:<br>
-<b>http://127.0.0.1:5000/retrieveai</b>
+RAG Example: <b>http://127.0.0.1:5000/retrieveai</b><br>
+Automated Review: <b>http://127.0.0.1:5000/review</b><br>
+QnA for uploaded files: <b>http://127.0.0.1:5000/upload<b><br><br>
 
 <h3>3. Distribute the service</h3>
 You should obtain public IP address to open your own service.<br>
